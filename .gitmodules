@@ -1,0 +1,3 @@
+[submodule "slcs-rs"]
+	path = slcs-rs
+	url = git@github.com:ComputerWorksGmbH/slcs-rs.git
