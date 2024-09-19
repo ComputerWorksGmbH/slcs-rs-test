@@ -1,8 +1,20 @@
-use slcs_rs::*;
-use std::io::prelude::*;
-use std::net::TcpStream;
+use std::{io::Write, net::TcpStream};
+
+use clap::Parser;
+use slcs_rs::{Bitmap, CommandListBuilder, Direction, PrintProcess};
+
+#[derive(Parser)]
+struct Args {
+    #[arg(required = true)]
+    text: String,
+
+    #[arg(default_value = "1")]
+    amount: u8,
+}
 
 fn main() -> std::io::Result<()> {
+    let args = Args::parse();
+
     let mut stream = TcpStream::connect("10.19.89.70:9100")?;
 
     let mut builder = &mut CommandListBuilder::new();
@@ -13,14 +25,11 @@ fn main() -> std::io::Result<()> {
         .set_process(PrintProcess::ThermalTransfer)
         .set_speed(3)
         .set_density(14)
-        .set_cutting(true, 5);
+        .set_cutting(true, args.amount as u32);
 
     let label = builder
-        .text_ex(25, 50, false, Rotation::None, '1', "ComputerWorks GmbH")
-        .text_ex(25, 80, false, Rotation::None, '1', "Schwarzwaldstr. 67")
-        .text_ex(25, 110, false, Rotation::None, '1', "79539 Loerrach")
-        .text_ex(25, 160, false, Rotation::None, '1', "Tel: +49 7621 40180")
-        .print_many(5);
+        .bitmap(110, 14, Bitmap::from_str_as_qr(200, &args.text).unwrap())
+        .print_many(args.amount as u32);
 
     stream.write_all(&label.clone().data())?;
 
